@@ -202,24 +202,6 @@ class SheetController {
     this._header = this.getHeaderRange().getValues().flat();
   }
 
-/**
- * SheetControllerクラスのクラス変数情報<br />
- * 【出力のみ】となっているものは呼び出し元から変更できません
- * 
- * @typedef {Object} SheetControllerParam
- * 
- * @prop {?string}  bookId        対象ブックID
- * @prop {!string}  sheetName     操作対象シート名
- * @prop {?number}  headerRow     ヘッダー行番号
- * @prop {?number}  startColumn   開始列番号
- * @prop {?number}  keyColumn     キー（入力必須）列番号
- * @prop {?number}  dataStartRow  【出力のみ】データ開始行番号
- * @prop {?number}  lastRow       【出力のみ】データエリアの最終行番号
- * @prop {?number}  lastColumn    【出力のみ】データエリアの最終列番号
- * @prop {?number}  rowNum        【出力のみ】データエリアのデータ行数
- * @prop {?number}  columnNum     【出力のみ】データエリアのデータ列数
- * 
- */
   /**
    * SheetControllerインスタンスのクラス変数情報を取得する
    * 
