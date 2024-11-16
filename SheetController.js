@@ -305,18 +305,34 @@ class SheetController {
 
   /**
    * データエリアから指定した列の範囲を取得する<br />
-   * allRowにtrueを指定するとシート全行を対象とする
+   * <ul>
+   *   <li>allRowにtrueを指定するとシート全行を対象</li>
+   *   <li>hasHeaderにtrueを指定するとヘッダー込みの範囲を取得</li>
+   * </ul>
    * 
    * @param {number}  startColumn       開始列番号
    * @param {number}  [columnNum=1]     取得列数
-   * @param {boolean} [allRow=false] 前列取得判定
+   * @param {boolean} [allRow=false]    全行取得判定
+   * @param {boolean} [hasHeader=false] ヘッダー対象判定
    * 
    * @return {SpreadsheetApp.Range} 指定列のRangeインスタンス
    * 
    */
-  getColumnRange(startColumn, columnNum=1, allRow=false) {
-    const startRow = (allRow) ? 1 : this._dataStartRow;
-    const rowNum = (allRow) ? this._sheet.getMaxRows() : this._rowNum;
+  getColumnRange(startColumn, columnNum=1, allRow=false, hasHeader=false) {
+    let startRow;
+    let rowNum;
+
+    if(allRow) {
+      startRow = 1;
+      rowNum = this._sheet.getMaxRows();
+    } else if(hasHeader) {
+      startRow = this._headerRow;
+      rowNum = this._rowNum + 1;
+    } else {
+      startRow = this._dataStartRow;
+      rowNum = this._rowNum;
+    }
+
     const columnRange = this.getRange({
       startRow: startRow,
       startColumn: startColumn,
