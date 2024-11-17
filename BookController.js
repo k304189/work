@@ -98,6 +98,49 @@ class BookController {
   }
 
   /** 
+   * クラスに紐づくブックのファイル名を取得する
+   * 
+   * @return {string} ブックのファイル名
+   * 
+   */
+  getBookName() {
+    return this._bookFile.getName();
+  }
+
+  /**
+   * BookControllerに紐づくブックのファイル名を変更する
+   * 
+   * @param {string} afterName 変更後のファイル名
+   * 
+   */
+  renameBookName(afterName) {
+    this._bookFile.setName(afterName);
+  }
+
+  /**
+   * ブック内の指定したシート名のSheetControllerを取得する
+   * 
+   * @param {string}                sheetName             取得対象シート名
+   * @param {SheetControllerParam}  sheetControllerParam  取り込みシートのSheetControllerパラメータ
+   * 
+   * @return {SheetController} 自ブックの取得したシートのSheetController
+   * 
+   */
+  getSheetControllerBySheetName(sheetName, sheetControllerParam) {
+    const sheetNameArray = this._book.getSheets().map(row => row.getSheetName());
+
+    if(!sheetNameArray.includes(sheetName)) {
+      throw new Error(`ブック「${this.getBookName()}」にシート「${sheetName}」は存在しません`);
+    }
+
+    // パラメータの入力値をBookController用に変更する
+    sheetControllerParam.bookId = this._book.getId();
+    sheetControllerParam.sheetName = sheetName;
+
+    return new SheetController(sheetControllerParam);
+  }
+
+  /** 
    * BookControllerに紐づくブックの配置フォルダを移動する
    * 
    * @param {string}  moveToFolderId  移動先フォルダID
@@ -175,7 +218,7 @@ class BookController {
   /** 
    * GoogleドライブのブックURLからファイルIDを抽出する
    * 
-   * @param {string} folderUrl  ファイルIDを抽出するGoogleドライブのブックURL
+   * @param {string} bookUrl  ファイルIDを抽出するGoogleドライブのブックURL
    * 
    * @return {string} ブックID
    * 
