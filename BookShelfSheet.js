@@ -3,7 +3,8 @@
  * 
  * @typedef {Object} BookShelfSheetParam
  * 
- * @prop {?number}        bookListAreaStartColumn     ブックリスト範囲の開始列番号
+ * @prop {?RangeAddress}  bookListAddress             ブックリスト範囲情報
+ * @prop {?number}        bookLinkStartColumn         ブックのリンク設定スタート列番号
  * @prop {?RangeAddress}  rootFolderUrlCellAddress    ルートフォルダURLのセル情報
  * @prop {?RangeAddress}  templateBookUrlCellAddress  テンプレートBookUrlのセル情報
  * 
@@ -28,27 +29,42 @@ class BookShelfSheet {
   /**
    * BookShelfインスタンスを作成する
    * 
-   * @param {SheetControllerParam} param  初期化パラメータ
+   * @param {BookShelfSheetParam} param  初期化パラメータ
    */
   constructor(param) {
+
+    // 指定がない場合のデフォルト設定値
+    const defaultSheetControllerParam = {
+      sheetName: "ブック一覧",
+      headerRow: 13,
+      startColumn: 1,
+      keyColumn: 2
+    };
+
+    let sheetControllerParam = defaultSheetControllerParam;
+    const inputAddress = param.bookListAddress;
+    if(inputAddress) {  // 入力パラメータがあれば、必要な情報は抽出する
+      sheetControllerParam = {
+        sheetName: inputAddress.sheetName || sheetControllerParam.sheetName,
+        headerRow: inputAddress.headerRow || sheetControllerParam.headerRow,
+        startColumn: inputAddress.startColumn || sheetControllerParam.startColumn,
+        keyColumn: inputAddress.keyColumn || sheetControllerParam.keyColumn
+      }
+    }
+
     /** 
      * BookShelf用のSheetController
      * @type {SheetController}
      * @private
      */
-    const keyColumn = 2;  // 2列目をキー列（入力必須列）とする
-    this._sheetController = new SheetController({
-      sheetName: "ブック一覧",
-      headerRow: 13,
-      keyColumn: keyColumn
-    });
+    this._sheetController = new SheetController(sheetControllerParam);
 
     /** 
      * Bookの追加時の開始列番号
      * @type {number}
      * @private
      */
-    this._bookListAreaStartColumn = param.bookListAreaStartColumn || keyColumn + 1;
+    this._bookLinkStartColumn = param.bookLinkStartColumn || defaultSheetControllerParam.keyColumn + 1;
 
     /** 
      * ルートドライブURL保持のセル情報
@@ -131,6 +147,31 @@ class BookShelfSheet {
   }
 
   /** 
+   * Bookの保管場所となるルートDrive配下の指定フォルダを取得する
+   * 
+   * @param {!string} createFolderName  取得するフォルダ名
+   * 
+   * @return {DriveApp.Folder} 対象フォルダオブジェクト
+   * 
+   */
+  getFolderInRootFolder(getFlolderName) {
+    if(!createFolderName) {
+      throw new Error("指定されたフォルダ名が空文字です。有効なフォルダ名を指定してください");
+    }
+
+    const rootFolder = this.getRootFolder();
+    const childFolders = rootFolder.getFoldersByName(getFlolderName);
+    let folder = null;
+
+    if(childFolders.hasNext()) {
+      // 指定フォルダ名のフォルダが存在すればそれを返す
+      folder = childFolders.next();
+    }
+
+    return folder;
+  }
+
+  /** 
    * Bookの保管場所となるルートDriveに子フォルダを作成する
    * 
    * @param {!string} createFolderName  作成するフォルダ名
@@ -139,19 +180,11 @@ class BookShelfSheet {
    * 
    */
   createFolderInRootFolder(createFolderName) {
-    if(!createFolderName) {
-      throw new Error("指定されたフォルダ名が空文字です。有効なフォルダ名を指定してください");
-    }
+    let createFolder = getFolderInRootFolder(); // 指定フォルダがすでに存在すればそれを返す
 
-    const rootFolder = this.getRootFolder();
-    const childFolders = rootFolder.getFoldersByName(createFolderName);
-    let createFolder;
-
-    if(childFolders.hasNext()) {
+    if(!createFolder) { // 存在しない場合、作成する
       // 指定フォルダ名のフォルダが存在すればそれを返す
-      createFolder = childFolders.next();
-    } else {
-      createFolder = rootFolder.createFolder(createFolderName);
+      createFolder = this.getRootFolder().createFolder(createFolderName);
     }
 
     return createFolder;
@@ -223,10 +256,10 @@ class BookShelfSheet {
     if(addPosition === BookShelfSheet.ADD_POSITION_LAST) {
       addColumn = lastColumn + 1;
     } else {
-      addColumn = this._bookListAreaStartColumn;
+      addColumn = this._bookLinkStartColumn;
     }
 
-    const targetColumnRange = this._sheetController.getColumnRange(addColumn, 1, false, true);
+    const targetColumnRange = this._sheetController.getColumnRange(addColumn, 1, SheetController.COLUMN_RANGE_HAS_HEADER);
     const newAdditionalRangeColumn = targetColumnRange.insertCells(SpreadsheetApp.Dimension).getColumn();
 
     // 追加列のヘッダーに列名をセットする
