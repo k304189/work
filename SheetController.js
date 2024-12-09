@@ -312,20 +312,19 @@ class SheetController {
    * 
    * @param {number}  startColumn       開始列番号
    * @param {number}  [columnNum=1]     取得列数
-   * @param {boolean} [allRow=false]    全行取得判定
-   * @param {boolean} [hasHeader=false] ヘッダー対象判定
+   * @param {string}  [rangeArea=null]  列取得範囲 デフォルトはデータのみ
    * 
    * @return {SpreadsheetApp.Range} 指定列のRangeインスタンス
    * 
    */
-  getColumnRange(startColumn, columnNum=1, allRow=false, hasHeader=false) {
+  getColumnRange(startColumn, columnNum=1, rangeArea=null) {
     let startRow;
     let rowNum;
 
-    if(allRow) {
+    if(rangeArea === SheetController.COLUMN_RANGE_ALL_COLUMN) {
       startRow = 1;
       rowNum = this._sheet.getMaxRows();
-    } else if(hasHeader) {
+    } else if(rangeArea === SheetController.COLUMN_RANGE_HAS_HEADER) {
       startRow = this._headerRow;
       rowNum = this._rowNum + 1;
     } else {
@@ -379,6 +378,17 @@ class SheetController {
     this.reflashLastColumn();
 
     return outputHeaderRange;
+  }
+
+  /**
+   * データエリアにデータが存在するかチェックする
+   * 
+   * @return {boolean} true：データが存在する false：データが存在しない
+   * 
+   */
+  existsData() {
+    const firstDataRowCell = this._sheet.getRange(this._dataStartRow, this._keyColumn).getValue();
+    return firstDataRowCell !== "";
   }
 
   /**
@@ -557,5 +567,29 @@ class SheetController {
    */
   static get NUMBER_FOMAT_PERCENT() {
     return "0.00%";
+  }
+
+  /**
+   * getRange取得範囲：「データのみ」
+   * @type {string}
+   */
+  static get COLUMN_RANGE_ONLY_DATA() {
+    return "column_range_only_data";
+  }
+
+  /**
+   * getRange取得範囲：「ヘッダー + データ」
+   * @type {string}
+   */
+  static get COLUMN_RANGE_HAS_HEADER() {
+    return "column_range_has_header";
+  }
+
+  /**
+   * getRange取得範囲：「列全体」
+   * @type {string}
+   */
+  static get COLUMN_RANGE_ALL_COLUMN() {
+    return "column_range_all_column";
   }
 }
